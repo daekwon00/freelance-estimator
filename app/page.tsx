@@ -40,30 +40,30 @@ export default function Home() {
   };
 
   return (
-    <main className="max-w-2xl mx-auto p-8">
+    <main className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-900 min-h-screen text-gray-900 dark:text-gray-100">
       <h1 className="text-2xl font-bold mb-6">🧾 프리랜서 견적 자동화</h1>
 
       <div className="space-y-4">
         <input
-          className="w-full border rounded p-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
           placeholder="프로젝트명"
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
         />
         <textarea
-          className="w-full border rounded p-2 h-32"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 h-32 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
           placeholder="요구사항을 자유롭게 설명해주세요"
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
         />
         <input
-          className="w-full border rounded p-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
           placeholder="납기일 (예: 2026-04-30)"
           value={form.deadline}
           onChange={(e) => setForm({ ...form, deadline: e.target.value })}
         />
         <input
-          className="w-full border rounded p-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
           placeholder="예산 (선택, 예: 500만원)"
           value={form.budget}
           onChange={(e) => setForm({ ...form, budget: e.target.value })}
@@ -71,7 +71,7 @@ export default function Home() {
         <button
           onClick={handleSubmit}
           disabled={loading || !form.title || !form.description}
-          className="w-full py-3 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="w-full py-3 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50"
         >
           {loading ? "⏳ 5개 Agent 분석 중..." : "견적서 생성"}
         </button>
