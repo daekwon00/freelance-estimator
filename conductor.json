@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "setup": "cp $CONDUCTOR_ROOT_PATH/.env.local .env.local && pnpm install",
+    "run": "pnpm dev --port $CONDUCTOR_PORT"
+  }
+}
