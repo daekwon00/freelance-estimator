@@ -11,19 +11,32 @@ export default function Home() {
     budget: "",
   });
   const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     setLoading(true);
     setResult(null);
-    const res = await fetch("/api/estimate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    const data = await res.json();
-    setResult(data.markdown);
-    setLoading(false);
+    setError(null);
+    try {
+      const res = await fetch("/api/estimate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || `요청 실패 (${res.status})`);
+      }
+      const data = await res.json();
+      setResult(data.markdown);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -63,6 +76,12 @@ export default function Home() {
           {loading ? "⏳ 5개 Agent 분석 중..." : "견적서 생성"}
         </button>
       </div>
+
+      {error && (
+        <p className="mt-6 text-red-600 bg-red-50 border border-red-200 rounded p-4">
+          {error}
+        </p>
+      )}
 
       {result && <EstimateResult markdown={result} />}
     </main>
