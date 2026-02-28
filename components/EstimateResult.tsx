@@ -1,5 +1,7 @@
 "use client";
 
+import ReactMarkdown from "react-markdown";
+
 export function EstimateResult({ markdown }: { markdown: string }) {
   const handleDownload = () => {
     const blob = new Blob([markdown], { type: "text/markdown" });
@@ -22,9 +24,9 @@ export function EstimateResult({ markdown }: { markdown: string }) {
           .md 다운로드
         </button>
       </div>
-      <pre className="bg-gray-50 p-6 rounded-lg whitespace-pre-wrap text-sm">
-        {markdown}
-      </pre>
+      <div className="prose prose-sm max-w-none bg-gray-50 p-6 rounded-lg">
+        <ReactMarkdown>{markdown}</ReactMarkdown>
+      </div>
     </div>
   );
 }
