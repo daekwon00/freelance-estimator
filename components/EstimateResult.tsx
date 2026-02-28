@@ -19,12 +19,12 @@ export function EstimateResult({ markdown }: { markdown: string }) {
         <h2 className="text-xl font-bold">📄 견적서</h2>
         <button
           onClick={handleDownload}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
         >
           .md 다운로드
         </button>
       </div>
-      <div className="prose prose-sm max-w-none bg-gray-50 p-6 rounded-lg">
+      <div className="prose prose-sm max-w-none bg-gray-50 dark:bg-gray-800 dark:prose-invert p-6 rounded-lg">
         <ReactMarkdown>{markdown}</ReactMarkdown>
       </div>
     </div>
