@@ -83,7 +83,7 @@ export default function Home() {
         </p>
       )}
 
-      {result && <EstimateResult markdown={result} />}
+      {result && <EstimateResult markdown={result} title={form.title} />}
     </main>
   );
 }

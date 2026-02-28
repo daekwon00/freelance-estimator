@@ -2,13 +2,13 @@
 
 import ReactMarkdown from "react-markdown";
 
-export function EstimateResult({ markdown }: { markdown: string }) {
+export function EstimateResult({ markdown, title }: { markdown: string; title: string }) {
   const handleDownload = () => {
     const blob = new Blob([markdown], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `견적서_${new Date().toISOString().slice(0, 10)}.md`;
+    a.download = `견적서_${new Date().toISOString().slice(0, 10)}_${title}.md`;
     a.click();
     URL.revokeObjectURL(url);
   };
