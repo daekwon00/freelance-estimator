@@ -6,6 +6,7 @@ import { ProgressPanel } from "@/components/ProgressPanel";
 import { HistoryPanel } from "@/components/HistoryPanel";
 import { addHistory } from "@/lib/history";
 import { PRESETS } from "@/lib/presets";
+import { validateForm, hasErrors, ValidationErrors } from "@/lib/validate";
 import { AgentName, EstimateHistoryItem } from "@/types/estimate";
 
 type Phase = "idle" | "agents" | "synthesis" | "done";
@@ -24,10 +25,29 @@ export default function Home() {
   const [completedAgents, setCompletedAgents] = useState<AgentName[]>([]);
   const [historyKey, setHistoryKey] = useState(0);
   const [regeneratingSection, setRegeneratingSection] = useState<AgentName | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ValidationErrors>({});
 
   const isLoading = phase === "agents" || phase === "synthesis";
 
+  const updateField = (field: keyof typeof form, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
   const handleSubmit = useCallback(async () => {
+    const errors = validateForm(form);
+    if (hasErrors(errors)) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
+
     setPhase("agents");
     setResult(null);
     setStreamingText("");
@@ -42,7 +62,8 @@ export default function Home() {
       });
 
       if (!res.ok) {
-        throw new Error(`요청 실패 (${res.status})`);
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || `요청 실패 (${res.status})`);
       }
 
       const reader = res.body!.getReader();
@@ -143,6 +164,7 @@ export default function Home() {
     setError(null);
     setPhase("done");
     setCompletedAgents([]);
+    setFieldErrors({});
   }, []);
 
   return (
@@ -154,14 +176,15 @@ export default function Home() {
         {PRESETS.map((preset) => (
           <button
             key={preset.name}
-            onClick={() =>
+            onClick={() => {
               setForm({
                 title: preset.title,
                 description: preset.description,
                 deadline: preset.deadline,
                 budget: preset.budget,
-              })
-            }
+              });
+              setFieldErrors({});
+            }}
             disabled={isLoading}
             className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
           >
@@ -171,33 +194,61 @@ export default function Home() {
       </div>
 
       <div className="space-y-4">
-        <input
-          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
-          placeholder="프로젝트명"
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-        />
-        <textarea
-          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 h-32 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
-          placeholder="요구사항을 자유롭게 설명해주세요"
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-        />
-        <input
-          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
-          placeholder="납기일 (예: 2026-04-30)"
-          value={form.deadline}
-          onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-        />
-        <input
-          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
-          placeholder="예산 (선택, 예: 500만원)"
-          value={form.budget}
-          onChange={(e) => setForm({ ...form, budget: e.target.value })}
-        />
+        <div>
+          <input
+            className={`w-full border rounded p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 ${fieldErrors.title ? "border-red-400 dark:border-red-500" : "border-gray-300 dark:border-gray-600"}`}
+            placeholder="프로젝트명"
+            maxLength={100}
+            value={form.title}
+            onChange={(e) => updateField("title", e.target.value)}
+          />
+          {fieldErrors.title && (
+            <p className="text-sm text-red-500 mt-1">{fieldErrors.title}</p>
+          )}
+        </div>
+        <div>
+          <textarea
+            className={`w-full border rounded p-2 h-32 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 ${fieldErrors.description ? "border-red-400 dark:border-red-500" : "border-gray-300 dark:border-gray-600"}`}
+            placeholder="요구사항을 자유롭게 설명해주세요"
+            maxLength={5000}
+            value={form.description}
+            onChange={(e) => updateField("description", e.target.value)}
+          />
+          <div className="flex justify-between text-xs mt-1">
+            {fieldErrors.description ? (
+              <p className="text-red-500">{fieldErrors.description}</p>
+            ) : (
+              <span />
+            )}
+            <span className="text-gray-400">{form.description.length}/5,000</span>
+          </div>
+        </div>
+        <div>
+          <input
+            className={`w-full border rounded p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 ${fieldErrors.deadline ? "border-red-400 dark:border-red-500" : "border-gray-300 dark:border-gray-600"}`}
+            placeholder="납기일 (예: 2026-04-30)"
+            value={form.deadline}
+            onChange={(e) => updateField("deadline", e.target.value)}
+          />
+          {fieldErrors.deadline && (
+            <p className="text-sm text-red-500 mt-1">{fieldErrors.deadline}</p>
+          )}
+        </div>
+        <div>
+          <input
+            className={`w-full border rounded p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 ${fieldErrors.budget ? "border-red-400 dark:border-red-500" : "border-gray-300 dark:border-gray-600"}`}
+            placeholder="예산 (선택, 예: 500만원)"
+            maxLength={50}
+            value={form.budget}
+            onChange={(e) => updateField("budget", e.target.value)}
+          />
+          {fieldErrors.budget && (
+            <p className="text-sm text-red-500 mt-1">{fieldErrors.budget}</p>
+          )}
+        </div>
         <button
           onClick={handleSubmit}
-          disabled={isLoading || !form.title || !form.description}
+          disabled={isLoading}
           className="w-full py-3 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50"
         >
           {isLoading ? "분석 중..." : "견적서 생성"}
