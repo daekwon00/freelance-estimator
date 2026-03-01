@@ -4,7 +4,7 @@ import { runTechAgent } from "./agents/techAgent";
 import { runTimeAgent } from "./agents/timeAgent";
 import { runRiskAgent } from "./agents/riskAgent";
 import { runPriceAgent } from "./agents/priceAgent";
-import { ProjectInput, EstimateOutput, AgentName } from "@/types/estimate";
+import { ProjectInput, EstimateOutput, AgentName, AGENT_LABELS } from "@/types/estimate";
 
 function buildInputText(input: ProjectInput): string {
   return `
@@ -111,4 +111,37 @@ export async function runConductorStream(
   await stream.finalMessage();
 
   return fullText;
+}
+
+// 섹션별 재생성
+const agentRunners: Record<AgentName, (input: string) => Promise<string>> = {
+  scope: runScopeAgent,
+  tech: runTechAgent,
+  time: runTimeAgent,
+  risk: runRiskAgent,
+  price: runPriceAgent,
+};
+
+export async function regenerateSection(
+  input: ProjectInput,
+  agentName: AgentName,
+  currentMarkdown: string,
+): Promise<string> {
+  const inputText = buildInputText(input);
+
+  const newAgentResult = await agentRunners[agentName](inputText);
+
+  const result = await client.messages.create({
+    model: MODEL,
+    max_tokens: 2048,
+    system: `당신은 IT 프리랜서 견적서 수정 전문가입니다.
+기존 견적서에서 지정된 섹션만 새로운 분석 결과로 업데이트하세요.
+나머지 섹션은 그대로 유지하세요. 전체 견적서를 마크다운으로 출력하세요.`,
+    messages: [{
+      role: "user",
+      content: `[기존 견적서]\n${currentMarkdown}\n\n[업데이트할 섹션: ${AGENT_LABELS[agentName]}]\n새로운 분석 결과:\n${newAgentResult}\n\n위 섹션만 업데이트한 전체 견적서를 출력해주세요.`,
+    }],
+  });
+
+  return result.content[0].type === "text" ? result.content[0].text : currentMarkdown;
 }

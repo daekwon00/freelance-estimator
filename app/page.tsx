@@ -5,6 +5,7 @@ import { EstimateResult } from "@/components/EstimateResult";
 import { ProgressPanel } from "@/components/ProgressPanel";
 import { HistoryPanel } from "@/components/HistoryPanel";
 import { addHistory } from "@/lib/history";
+import { PRESETS } from "@/lib/presets";
 import { AgentName, EstimateHistoryItem } from "@/types/estimate";
 
 type Phase = "idle" | "agents" | "synthesis" | "done";
@@ -22,6 +23,7 @@ export default function Home() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [completedAgents, setCompletedAgents] = useState<AgentName[]>([]);
   const [historyKey, setHistoryKey] = useState(0);
+  const [regeneratingSection, setRegeneratingSection] = useState<AgentName | null>(null);
 
   const isLoading = phase === "agents" || phase === "synthesis";
 
@@ -53,9 +55,8 @@ export default function Home() {
 
         buffer += decoder.decode(value, { stream: true });
 
-        // SSE 파싱: 이벤트는 \n\n 으로 구분
         const parts = buffer.split("\n\n");
-        buffer = parts.pop()!; // 마지막 불완전한 부분은 버퍼에 유지
+        buffer = parts.pop()!;
 
         for (const part of parts) {
           if (!part.trim()) continue;
@@ -81,7 +82,6 @@ export default function Home() {
               setResult(data.markdown);
               setStreamingText("");
               setPhase("done");
-              // 히스토리에 저장
               addHistory({
                 title: form.title,
                 description: form.description,
@@ -104,6 +104,38 @@ export default function Home() {
     }
   }, [form]);
 
+  const handleRegenerate = useCallback(
+    async (agentName: AgentName) => {
+      if (!result) return;
+      setRegeneratingSection(agentName);
+      setError(null);
+      try {
+        const res = await fetch("/api/estimate/section", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...form,
+            section: agentName,
+            currentMarkdown: result,
+          }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          throw new Error(data?.error || `재생성 실패 (${res.status})`);
+        }
+        const data = await res.json();
+        setResult(data.markdown);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "섹션 재생성 중 오류가 발생했습니다.",
+        );
+      } finally {
+        setRegeneratingSection(null);
+      }
+    },
+    [form, result],
+  );
+
   const handleLoadHistory = useCallback((item: EstimateHistoryItem) => {
     setForm((prev) => ({ ...prev, title: item.title, description: item.description }));
     setResult(item.markdown);
@@ -116,6 +148,27 @@ export default function Home() {
   return (
     <main className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-900 min-h-screen text-gray-900 dark:text-gray-100">
       <h1 className="text-2xl font-bold mb-6">🧾 프리랜서 견적 자동화</h1>
+
+      {/* 템플릿 프리셋 */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {PRESETS.map((preset) => (
+          <button
+            key={preset.name}
+            onClick={() =>
+              setForm({
+                title: preset.title,
+                description: preset.description,
+                deadline: preset.deadline,
+                budget: preset.budget,
+              })
+            }
+            disabled={isLoading}
+            className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          >
+            {preset.name}
+          </button>
+        ))}
+      </div>
 
       <div className="space-y-4">
         <input
@@ -151,7 +204,6 @@ export default function Home() {
         </button>
       </div>
 
-      {/* 진행률 패널 */}
       <ProgressPanel phase={phase} completedAgents={completedAgents} />
 
       {error && (
@@ -160,15 +212,19 @@ export default function Home() {
         </p>
       )}
 
-      {/* 스트리밍 중 실시간 텍스트 */}
       {streamingText && !result && (
         <EstimateResult markdown={streamingText} title={form.title} streaming />
       )}
 
-      {/* 완료된 결과 */}
-      {result && <EstimateResult markdown={result} title={form.title} />}
+      {result && (
+        <EstimateResult
+          markdown={result}
+          title={form.title}
+          onRegenerate={handleRegenerate}
+          regeneratingSection={regeneratingSection}
+        />
+      )}
 
-      {/* 히스토리 */}
       <HistoryPanel onLoad={handleLoadHistory} refreshKey={historyKey} />
     </main>
   );

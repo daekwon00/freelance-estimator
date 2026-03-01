@@ -36,6 +36,23 @@ export type SSEEvent =
   | { event: "done"; data: { markdown: string } }
   | { event: "error"; data: { message: string } };
 
+// 섹션 재생성 관련
+export const SECTION_KEYWORDS: Record<string, AgentName> = {
+  "범위": "scope",
+  "스코프": "scope",
+  "기술": "tech",
+  "스택": "tech",
+  "공수": "time",
+  "일정": "time",
+  "기간": "time",
+  "리스크": "risk",
+  "위험": "risk",
+  "견적": "price",
+  "금액": "price",
+  "비용": "price",
+  "단가": "price",
+};
+
 // 히스토리 관련 타입
 export interface EstimateHistoryItem {
   id: string;
