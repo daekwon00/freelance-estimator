@@ -1,10 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk";
-
-const client = new Anthropic();
+import { client, MODEL } from "../client";
 
 export async function runScopeAgent(input: string): Promise<string> {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: MODEL,
     max_tokens: 1024,
     system: `당신은 IT 프리랜서 프로젝트의 범위 분석 전문가입니다.
 주어진 프로젝트 설명을 분석하여 다음을 파악하세요:

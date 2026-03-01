@@ -1,10 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk";
-
-const client = new Anthropic();
+import { client, MODEL } from "../client";
 
 export async function runPriceAgent(input: string): Promise<string> {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: MODEL,
     max_tokens: 1024,
     system: `당신은 한국 IT 프리랜서 시장의 단가 및 견적 전문가입니다.
 현재 시장 단가를 기준으로 견적을 산정하세요.

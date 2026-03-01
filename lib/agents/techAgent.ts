@@ -1,10 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk";
-
-const client = new Anthropic();
+import { client, MODEL } from "../client";
 
 export async function runTechAgent(input: string): Promise<string> {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: MODEL,
     max_tokens: 1024,
     system: `당신은 IT 프리랜서 프로젝트의 기술 스택 추천 전문가입니다.
 프로젝트 요구사항에 맞는 최적의 기술 스택을 추천하고 이유를 설명하세요.

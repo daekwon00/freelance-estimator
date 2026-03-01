@@ -1,10 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk";
-
-const client = new Anthropic();
+import { client, MODEL } from "../client";
 
 export async function runRiskAgent(input: string): Promise<string> {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: MODEL,
     max_tokens: 1024,
     system: `당신은 IT 프리랜서 프로젝트의 리스크 분석 전문가입니다.
 프로젝트의 잠재적 리스크를 파악하고 대응 방안을 제시하세요.

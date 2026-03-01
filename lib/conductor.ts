@@ -1,12 +1,10 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { client, MODEL } from "./client";
 import { runScopeAgent } from "./agents/scopeAgent";
 import { runTechAgent } from "./agents/techAgent";
 import { runTimeAgent } from "./agents/timeAgent";
 import { runRiskAgent } from "./agents/riskAgent";
 import { runPriceAgent } from "./agents/priceAgent";
 import { ProjectInput, EstimateOutput } from "@/types/estimate";
-
-const client = new Anthropic();
 
 export async function runConductor(input: ProjectInput): Promise<EstimateOutput> {
   const inputText = `
@@ -27,7 +25,7 @@ export async function runConductor(input: ProjectInput): Promise<EstimateOutput>
 
   // Conductor가 결과 취합 → 최종 견적서 생성
   const synthesis = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: MODEL,
     max_tokens: 2048,
     system: `당신은 IT 프리랜서 견적서 작성 전문가입니다.
 5개 분석 결과를 취합하여 전문적인 견적서를 마크다운으로 작성하세요.
